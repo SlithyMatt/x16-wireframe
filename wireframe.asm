@@ -10,25 +10,25 @@
 .include "vsync.asm"
 
 start:
-   stz r0L
-   stz r0H
-   jsr GRAPH_init
-   jsr GRAPH_clear
+   ; clear VRAM
+   lda #06
+   jsr clear_screen
 
-   stz r0L
-   stz r0H
-   stz r1L
-   stz r1H
-   lda #<320
-   sta r2L
-   lda #>320
-   sta r2H
-   lda #240
-   sta r3L
-   stz r3H
-   jsr GRAPH_draw_line
+   ; Scale to 320x240
+   lda #64
+   sta VERA_dc_hscale
+   sta VERA_dc_vscale
 
-@loop:
+   ; Configure bitmap mode
+   lda #$04
+   sta VERA_L1_config
+   stz VERA_L1_tilebase
+   stz VERA_L1_hscroll_h
+
+   ; Enable interrupts
+   jsr init_irq
+
+@main_loop:
    wai
    jsr check_vsync
-   bra @loop
+   bra @main_loop
