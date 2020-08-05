@@ -113,10 +113,12 @@ model_tick:
    lda cur_x
    clc
    adc delta_x
+   sta cur_x
    tax
    lda cur_y
    clc
    adc delta_y
+   sta cur_y
    tay
    lda #1 ; color
    jsr plot_pixel
