@@ -15,6 +15,10 @@ model_y1: .byte Y1_INIT
 
 use_buffer: .byte 0
 vbyte:      .byte 0
+cur_x:      .byte 0
+cur_y:      .byte 0
+delta_x:    .byte 0
+delta_y:    .byte 0
 
 VRAMMAP_BANK = 1
 
@@ -68,8 +72,66 @@ model_tick:
    stz VERA_ctrl
    lda use_buffer
    sta VERA_addr_bank
-
+   lda #1
+   ldx model_x0
+   ldy model_y0
+   jsr plot_pixel
    lda model_x0
+   sta cur_x
+   lda model_y0
+   sta cur_y
+@loop:
+   stz delta_x
+   stz delta_y
+   lda cur_x
+   cmp model_x1
+   beq @check_y
+   bmi @left
+   lda #1
+   sta delta_x
+   bra @check_y
+@left:
+   lda #$FF
+   sta delta_x
+@check_y:
+   lda cur_y
+   cmp model_y1
+   beq @check_x
+   bmi @up
+   lda #1
+   sta delta_y
+   bra @plot
+@up:
+   lda #$FF
+   sta delta_y
+   bra @plot
+@check_x:
+   lda cur_x
+   cmp model_x1
+   beq @switch
+@plot:
+   lda cur_x
+   clc
+   adc delta_x
+   tax
+   lda cur_y
+   clc
+   adc delta_y
+   tay
+   lda #1 ; color
+   jsr plot_pixel
+   bra @loop
+@switch:
+   lda use_buffer
+   lsr
+   ror
+   sta VERA_L1_tilebase
+@return:
+   rts
+
+plot_pixel:
+   pha
+   txa
    lsr
    lsr
    lsr
@@ -78,10 +140,10 @@ model_tick:
    clc
    adc #VRAMMAP_BANK
    sta RAM_BANK
-   lda model_x0
+   txa
    and #$0F
    sta ZP_PTR_1+1
-   lda model_y0
+   tya
    asl
    rol ZP_PTR_1+1
    clc
@@ -96,9 +158,9 @@ model_tick:
    iny
    lda (ZP_PTR_1),y
    sta VERA_addr_high
-   lda #1 ; color
+   pla ; color
    sta vbyte
-   lda model_x0
+   txa
    bit #$01
    bne @draw
    asl vbyte
@@ -106,15 +168,10 @@ model_tick:
    asl vbyte
    asl vbyte
 @draw:
-   lda vbyte
+   lda VERA_data0
+   ora vbyte
    sta VERA_data0
-
-   lda use_buffer
-   lsr
-   ror
-   sta VERA_L1_tilebase
-
-@return:
    rts
+
 
 .endif
