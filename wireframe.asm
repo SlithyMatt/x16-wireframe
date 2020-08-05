@@ -7,9 +7,31 @@
 .segment "CODE"
    jmp start
 
-.include "vsync.asm"
+.include "irq.asm"
+
+vram_map_fn: .byte "vrammap.bin"
+
 
 start:
+   ; load VRAM map
+   lda #KERNAL_ROM_BANK
+   sta ROM_BANK
+   lda #1
+   ldx #8
+   ldy #0
+   jsr SETLFS
+   lda #11
+   ldx #<vram_map_fn
+   ldy #>vram_map_fn
+   jsr SETNAM
+   lda #VRAMMAP_BANK
+   sta RAM_BANK
+   lda #0
+   ldx #<RAM_WIN
+   ldy #>RAM_WIN
+   jsr LOAD
+
+
    ; clear VRAM
    lda #06
    jsr clear_screen

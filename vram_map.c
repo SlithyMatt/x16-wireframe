@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #define ROW_WIDTH 160
-#define X_OFFSET 32
+#define X_OFFSET 16
 
 int main(int argc, char **argv) {
    FILE *ofp;
@@ -15,9 +15,9 @@ int main(int argc, char **argv) {
    odata[1] = 0;
    fwrite(odata,1,2,ofp);
 
-   for (x = 0; x < 256; x++) {
+   for (x = 0; x < 128; x++) {
       for (y = 0; y < 256; y++) {
-         address = (x+X_OFFSET)/2 + y * ROW_WIDTH;
+         address = x + X_OFFSET + y * ROW_WIDTH;
          odata[0] = (uint8_t) (address & 0xFF);
          odata[1] = (uint8_t) ((address & 0xFF00) >> 8);
          fwrite(odata,1,2,ofp);

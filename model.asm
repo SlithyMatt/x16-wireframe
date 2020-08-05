@@ -14,6 +14,9 @@ model_x1: .byte X1_INIT
 model_y1: .byte Y1_INIT
 
 use_buffer: .byte 0
+vbyte:      .byte 0
+
+VRAMMAP_BANK = 1
 
 init_model:
    lda #0
@@ -66,9 +69,52 @@ model_tick:
    lda use_buffer
    sta VERA_addr_bank
 
-   
+   lda model_x0
+   lsr
+   lsr
+   lsr
+   lsr
+   lsr
+   clc
+   adc #VRAMMAP_BANK
+   sta RAM_BANK
+   lda model_x0
+   and #$0F
+   sta ZP_PTR_1+1
+   lda model_y0
+   asl
+   rol ZP_PTR_1+1
+   clc
+   adc #<RAM_WIN
+   sta ZP_PTR_1
+   lda ZP_PTR_1+1
+   adc #>RAM_WIN
+   sta ZP_PTR_1+1
+   ldy #0
+   lda (ZP_PTR_1),y
+   sta VERA_addr_low
+   iny
+   lda (ZP_PTR_1),y
+   sta VERA_addr_high
+   lda #1 ; color
+   sta vbyte
+   lda model_x0
+   bit #$01
+   bne @draw
+   asl vbyte
+   asl vbyte
+   asl vbyte
+   asl vbyte
+@draw:
+   lda vbyte
+   sta VERA_data0
 
+   lda use_buffer
+   lsr
+   ror
+   sta VERA_L1_tilebase
 
+@return:
    rts
 
 .endif

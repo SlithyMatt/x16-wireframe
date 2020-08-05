@@ -1,3 +1,5 @@
 *.PRG
 *.list
 *.o
+*.exe
+*.BIN
