@@ -42,7 +42,7 @@ start:
    sta VERA_dc_vscale
 
    ; Configure bitmap mode
-   lda #$04
+   lda #$06
    sta VERA_L1_config
    stz VERA_L1_tilebase
    stz VERA_L1_hscroll_h
