@@ -8,10 +8,15 @@ Y0_INIT = 120
 X1_INIT = 0
 Y1_INIT = 200
 
-model_x0: .byte X0_INIT
-model_y0: .byte Y0_INIT
-model_x1: .byte X1_INIT
-model_y1: .byte Y1_INIT
+NO_LINE_Y = 240
+
+line_upper: .res 256
+line_lower: .res 256
+
+model_x0: .word X0_INIT
+model_y0: .word Y0_INIT
+model_x1: .word X1_INIT
+model_y1: .word Y1_INIT
 
 use_buffer: .byte 0
 vbyte:      .byte 0
@@ -72,43 +77,43 @@ model_tick:
    stz VERA_ctrl
    lda use_buffer
    sta VERA_addr_bank
-   lda #1
-   ldx model_x0
-   ldy model_y0
-   jsr plot_pixel
+
+   jsr clear_line
    lda model_x0
-   sta cur_x
+   cmp model_x1
+   beq @vertical
+   bcc @calc_slope
+   pha
+   lda model_x1
+   sta model_x0
+   pla
+   sta model_x1
+@calc_slope:
+   lda model_x0
+   lsr
+   sta model_x0+1
+   stz model_x0
+   ror model_x0
+
+
+@vertical:
+   ldx model_x0
    lda model_y0
-   sta cur_y
-@loop:
-   stz delta_x
-   stz delta_y
-   lda cur_x
-   cmp model_x1
-   beq @check_y
-   bcs @left
-   lda #1
-   sta delta_x
-   bra @check_y
-@left:
-   lda #$FF
-   sta delta_x
-@check_y:
-   lda cur_y
    cmp model_y1
-   beq @check_x
-   bcs @up
-   lda #1
-   sta delta_y
-   bra @plot
-@up:
-   lda #$FF
-   sta delta_y
-   bra @plot
-@check_x:
-   lda cur_x
-   cmp model_x1
-   beq @switch
+   bcc @set_vert_line
+   pha
+   lda model_y1
+   sta model_y0
+   pla
+   sta model_y1
+@set_vert_line:
+   lda model_y0
+   sta line_upper,x
+   lda model_y1
+   sta line_lower,x
+
+@draw:
+
 @plot:
    lda cur_x
    clc
@@ -129,6 +134,16 @@ model_tick:
    ror
    sta VERA_L1_tilebase
 @return:
+   rts
+
+clear_line:
+   ldx #0
+@loop:
+   lda #NO_LINE_Y
+   sta line_upper,x
+   sta line_lower,x
+   inx
+   bne @loop
    rts
 
 plot_pixel:
