@@ -1,6 +1,8 @@
 .ifndef MODEL_INC
 MODEL_INC = 1
 
+.include "fixedpt.asm"
+
 BITMAP_SIZE = 320 * 240 / 2
 
 X0_INIT = 30
@@ -13,17 +15,17 @@ NO_LINE_Y = 240
 line_upper: .res 256
 line_lower: .res 256
 
-model_x0: .word X0_INIT
-model_y0: .word Y0_INIT
-model_x1: .word X1_INIT
-model_y1: .word Y1_INIT
+model_x0: .byte X0_INIT
+model_y0: .byte Y0_INIT
+model_x1: .byte X1_INIT
+model_y1: .byte Y1_INIT
 
 use_buffer: .byte 0
 vbyte:      .byte 0
 cur_x:      .byte 0
 cur_y:      .byte 0
-delta_x:    .byte 0
-delta_y:    .byte 0
+delta_x:    .word 0
+delta_y:    .word 0
 
 VRAMMAP_BANK = 1
 
@@ -89,11 +91,25 @@ model_tick:
    pla
    sta model_x1
 @calc_slope:
+   lda model_y1
+   jsr fp_lda_byte
+   lda model_y0
+   jsr fp_ldb_byte
+   jsr fp_subtract
+   lda FP_C
+   sta delta_y
+   lda FP_C+1
+   sta delta_y+1
+   lda model_x1
+   jsr fp_lda_byte
    lda model_x0
-   lsr
-   sta model_x0+1
-   stz model_x0
-   ror model_x0
+   jsr fp_ldb_byte
+   jsr fp_subtract
+   jsr fp_tcb
+   FP_LDA delta_y
+   jsr fp_divide ; FP_C = slope
+   jsr fp_tca
+   ; TODO calculate offset
 
 
 @vertical:
