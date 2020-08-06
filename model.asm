@@ -3,10 +3,10 @@ MODEL_INC = 1
 
 BITMAP_SIZE = 320 * 240 / 2
 
-X0_INIT = 0
-Y0_INIT = 128
-X1_INIT = 255
-Y1_INIT = 128
+X0_INIT = 30
+Y0_INIT = 120
+X1_INIT = 0
+Y1_INIT = 200
 
 model_x0: .byte X0_INIT
 model_y0: .byte Y0_INIT
@@ -86,7 +86,7 @@ model_tick:
    lda cur_x
    cmp model_x1
    beq @check_y
-   bmi @left
+   bcs @left
    lda #1
    sta delta_x
    bra @check_y
@@ -97,7 +97,7 @@ model_tick:
    lda cur_y
    cmp model_y1
    beq @check_x
-   bmi @up
+   bcs @up
    lda #1
    sta delta_y
    bra @plot
@@ -134,15 +134,16 @@ model_tick:
 plot_pixel:
    pha
    txa
-   lsr
-   lsr
-   lsr
-   lsr
-   lsr
+   and #$E0
+   asl
+   rol
+   rol
+   rol
    clc
    adc #VRAMMAP_BANK
    sta RAM_BANK
    txa
+   lsr
    and #$0F
    sta ZP_PTR_1+1
    tya
