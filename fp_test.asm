@@ -34,6 +34,35 @@
    jsr CHROUT
 .endmacro
 
+print_byte:
+   pha
+   lsr
+   lsr
+   lsr
+   lsr
+   cmp #$0A
+   bpl @letter1:
+   ora #$30
+   jsr CHROUT
+   bra @lower
+@letter1:
+   clc
+   adc #$37
+   jsr CHROUT
+@lower:
+   pla
+   and #$0F
+   cmp #$0A
+   bpl @letter2:
+   ora #$30
+   jsr CHROUT
+   bra @return
+@letter2:
+   clc
+   adc #$37
+   jsr CHROUT
+@return:
+   rts
 
 start:
    PRINT_CR
@@ -48,19 +77,10 @@ start:
    jsr fp_ldb_byte
    jsr fp_add
    jsr fp_floor_byte
-   pha
-   lsr
-   lsr
-   lsr
-   lsr
-   ora #$30
-   jsr CHROUT
-   pla
-   and #$0F
-   ora #$30
-   jsr CHROUT
+   jsr print_byte
    PRINT_CR
    PRINT_CR
+
    PRINT_STRING "test 2: 100 + (-25) = 75 ($4b)"
    PRINT_CR
    PRINT_STRING "result: $"
@@ -74,20 +94,21 @@ start:
    jsr fp_lda_byte
    jsr fp_add
    jsr fp_floor_byte
-   pha
-   lsr
-   lsr
-   lsr
-   lsr
-   ora #$30
-   jsr CHROUT
-   pla
-   and #$0F
-   clc
-   adc #$37
-   jsr CHROUT
+   jsr print_byte
    PRINT_CR
    PRINT_CR
 
+   PRINT_STRING "test 3: 6 / 3 = 2 ($02)"
+   PRINT_CR
+   PRINT_STRING "result: $"
+   lda #6
+   jsr fp_lda_byte
+   lda #3
+   jsr fp_ldb_byte
+   jsr fp_divide
+   jsr fp_floor_byte
+   jsr print_byte
+   PRINT_CR
+   PRINT_CR
 
    rts
