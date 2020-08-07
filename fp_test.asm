@@ -61,7 +61,7 @@ start:
    jsr CHROUT
    PRINT_CR
    PRINT_CR
-   PRINT_STRING "test 2: 100 + (-25) = 75 ($4B)"
+   PRINT_STRING "test 2: 100 + (-25) = 75 ($4b)"
    PRINT_CR
    PRINT_STRING "result: $"
    lda #0
@@ -73,6 +73,7 @@ start:
    lda #100
    jsr fp_lda_byte
    jsr fp_add
+   jsr fp_floor_byte
    pha
    lsr
    lsr
