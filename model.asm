@@ -22,10 +22,10 @@ model_y1: .byte Y1_INIT
 
 use_buffer: .byte 0
 vbyte:      .byte 0
-cur_x:      .byte 0
-cur_y:      .byte 0
 delta_x:    .word 0
 delta_y:    .word 0
+slope:      .word 0
+offset:     .word 0
 
 VRAMMAP_BANK = 1
 
@@ -83,13 +83,21 @@ model_tick:
    jsr clear_line
    lda model_x0
    cmp model_x1
-   beq @vertical
+   bne @check_reverse
+   jmp @vertical   
+@check_reverse:
    bcc @calc_slope
    pha
    lda model_x1
    sta model_x0
    pla
    sta model_x1
+   lda model_y0
+   pha
+   lda model_y1
+   sta model_y0
+   pla
+   sta model_y1
 @calc_slope:
    lda model_y1
    jsr fp_lda_byte
@@ -108,10 +116,63 @@ model_tick:
    jsr fp_tcb
    FP_LDA delta_y
    jsr fp_divide ; FP_C = slope
+   lda FP_C
+   sta slope
+   lda FP_C+1
+   sta slope+1
    jsr fp_tca
-   ; TODO calculate offset
-
-
+   lda model_x0
+   jsr fp_ldb_byte
+   jsr fp_multiply
+   jsr fp_tcb
+   lda model_y0
+   jsr fp_lda_byte
+   jsr fp_subtract
+   lda FP_C
+   sta offset
+   lda FP_C+1
+   sta offset+1
+   ldx model_x0
+   lda model_y0
+   sta line_upper,x
+   inx
+@calc_line_upper:
+   txa
+   jsr fp_lda_byte
+   FP_LDB slope
+   jsr fp_multiply
+   jsr fp_tca
+   FP_LDB offset
+   jsr fp_add
+   jsr fp_floor_byte
+   sta line_upper,x
+   cpx model_x1
+   beq @calc_line_lower
+   inx
+   bra @calc_line_upper
+@calc_line_lower:
+   lda model_y1
+   sta line_lower,x
+@copy_loop:
+   lda line_upper,x
+   dex
+   sta line_lower,x
+   cpx model_x0
+   bne @copy_loop
+   bit slope+1
+   bpl @draw
+   ldx model_x0
+@switch_loop:
+   lda line_upper,x
+   pha
+   lda line_lower,x
+   sta line_upper,x
+   pla
+   sta line_lower,x
+   cpx model_x1
+   beq @draw
+   inx
+   bra @switch_loop
 @vertical:
    ldx model_x0
    lda model_y0
@@ -122,28 +183,33 @@ model_tick:
    sta model_y0
    pla
    sta model_y1
+   bra @draw
 @set_vert_line:
    lda model_y0
    sta line_upper,x
    lda model_y1
    sta line_lower,x
-
 @draw:
-
+   ldx model_x0
+@draw_x_loop:
+   cpx model_x1
+   beq @switch
+   inx
+   ldy line_upper,x
+@draw_y_loop:
+   tya
+   cmp line_lower,x
+   bmi @plot
+   bne @draw_x_loop
 @plot:
-   lda cur_x
-   clc
-   adc delta_x
-   sta cur_x
-   tax
-   lda cur_y
-   clc
-   adc delta_y
-   sta cur_y
-   tay
+   iny
+   phx
+   phy
    lda #1 ; color
    jsr plot_pixel
-   bra @loop
+   ply
+   plx
+   bra @draw_y_loop
 @switch:
    lda use_buffer
    lsr
