@@ -41,7 +41,7 @@ print_byte:
    lsr
    lsr
    cmp #$0A
-   bpl @letter1:
+   bpl @letter1
    ora #$30
    jsr CHROUT
    bra @lower
@@ -53,7 +53,7 @@ print_byte:
    pla
    and #$0F
    cmp #$0A
-   bpl @letter2:
+   bpl @letter2
    ora #$30
    jsr CHROUT
    bra @return
