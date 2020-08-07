@@ -84,7 +84,7 @@ model_tick:
    lda model_x0
    cmp model_x1
    bne @check_reverse
-   jmp @vertical   
+   jmp @vertical
 @check_reverse:
    bcc @calc_slope
    pha
@@ -137,6 +137,7 @@ model_tick:
    sta line_upper,x
    inx
 @calc_line_upper:
+   phx
    txa
    jsr fp_lda_byte
    FP_LDB slope
@@ -145,6 +146,7 @@ model_tick:
    FP_LDB offset
    jsr fp_add
    jsr fp_floor_byte
+   plx
    sta line_upper,x
    cpx model_x1
    beq @calc_line_lower
