@@ -71,8 +71,41 @@ clear_screen:
    rts
 
 model_tick:
-   ; TODO: handle joystick
-
+   lda joystick1_right
+   sec
+   sbc joystick1_left
+   sta delta_x
+   lda joystick1_down
+   sec
+   sbc joystick1_up
+   sta delta_y
+   lda joystick1_a
+   eor joystick1_b
+   beq @move_0
+   cmp joystick1_b
+   beq @move_1
+@move_0:
+   php
+   lda model_x0
+   clc
+   adc delta_x
+   sta model_x0
+   lda model_y0
+   clc
+   adc delta_y
+   sta model_y0
+   plp
+   bne @set_buffer
+@move_1:
+   lda model_x1
+   clc
+   adc delta_x
+   sta model_x1
+   lda model_y1
+   clc
+   adc delta_y
+   sta model_y1
+@set_buffer:
    lda use_buffer
    eor #$01
    sta use_buffer
