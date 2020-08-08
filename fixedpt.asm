@@ -34,6 +34,13 @@ fp_ldb_byte: ; FP_B = A
    sta FP_B+1
 .endmacro
 
+.macro FP_STC addr
+   lda FP_C
+   sta addr
+   lda FP_C+1
+   sta addr+1
+.endmacro
+
 fp_floor_byte: ; A = floor(FP_C)
    lda FP_C+1
    bit FP_C
@@ -109,14 +116,28 @@ fp_divide: ; FP_C = FP_A / FP_B; FP_R = FP_A % FP_B
    sta FP_C+1 ; C = |A|
 @check_sign_b:
    bit FP_B+1
-   bpl @init_r
+   bpl @shift_b
    lda #0
    sec
    sbc FP_B
    sta FP_B
    lda #0
    sta FP_B+1 ; B = |B|
-@init_r:
+@shift_b:
+   lsr FP_B+1
+   ror FP_B
+   lsr FP_B+1
+   ror FP_B
+   lsr FP_B+1
+   ror FP_B
+   lsr FP_B+1
+   ror FP_B
+   lsr FP_B+1
+   ror FP_B
+   lsr FP_B+1
+   ror FP_B
+   lsr FP_B+1
+   ror FP_B
    stz FP_R
    stz FP_R+1
    ldx #16     ;There are 16 bits in C
@@ -161,7 +182,7 @@ fp_divide: ; FP_C = FP_A / FP_B; FP_R = FP_A % FP_B
 @return:
    rts
 
-fp_multiply: ; FP_C = FP_A * FP_B
+fp_multiply: ; FP_C = FP_A * FP_B; FP_R overflow
    ; push original A and B to stack
    lda FP_A
    pha
@@ -176,10 +197,10 @@ fp_multiply: ; FP_C = FP_A * FP_B
    lda #0
    sec
    sbc FP_A
-   sta FP_C
+   sta FP_A
    lda #0
    sbc FP_A+1
-   sta FP_C+1 ; A = |A|
+   sta FP_A+1 ; A = |A|
 @check_sign_b:
    bit FP_B+1
    bpl @init_c
@@ -188,10 +209,11 @@ fp_multiply: ; FP_C = FP_A * FP_B
    sbc FP_B
    sta FP_B
    lda #0
+   sbc FP_B+1
    sta FP_B+1 ; B = |B|
 @init_c:
-   stz FP_C
-   stz FP_C+1
+   lda #0
+   sta FP_R
    ldx #16
 @loop1:
    lsr FP_B+1
@@ -200,16 +222,26 @@ fp_multiply: ; FP_C = FP_A * FP_B
    tay
    clc
    lda FP_A
-   adc FP_C
-   sta FP_C
+   adc FP_R
+   sta FP_R
    tya
    adc FP_A+1
 @loop2:
    ror
+   ror FP_R
+   ror FP_C+1
    ror FP_C
    dex
    bne @loop1
-   sta FP_C+1
+   sta FP_R+1
+   ldx #7
+@loop3:
+   lsr FP_R+1
+   ror FP_R
+   ror FP_C+1
+   ror FP_C
+   dex
+   bne @loop3
    ; restore A and B
    pla
    sta FP_B+1

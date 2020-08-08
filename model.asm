@@ -5,10 +5,10 @@ MODEL_INC = 1
 
 BITMAP_SIZE = 320 * 240 / 2
 
-X0_INIT = 30
+X0_INIT = 0
 Y0_INIT = 120
-X1_INIT = 0
-Y1_INIT = 200
+X1_INIT = 255
+Y1_INIT = 120
 
 NO_LINE_Y = 240
 
@@ -26,6 +26,7 @@ delta_x:    .word 0
 delta_y:    .word 0
 slope:      .word 0
 offset:     .word 0
+scratch:    .word 0
 
 VRAMMAP_BANK = 1
 
@@ -104,10 +105,7 @@ model_tick:
    lda model_y0
    jsr fp_ldb_byte
    jsr fp_subtract
-   lda FP_C
-   sta delta_y
-   lda FP_C+1
-   sta delta_y+1
+   FP_STC delta_y
    lda model_x1
    jsr fp_lda_byte
    lda model_x0
@@ -115,11 +113,8 @@ model_tick:
    jsr fp_subtract
    jsr fp_tcb
    FP_LDA delta_y
-   jsr fp_divide ; FP_C = slope
-   lda FP_C
-   sta slope
-   lda FP_C+1
-   sta slope+1
+   jsr fp_divide
+   FP_STC slope
    jsr fp_tca
    lda model_x0
    jsr fp_ldb_byte
@@ -128,10 +123,7 @@ model_tick:
    lda model_y0
    jsr fp_lda_byte
    jsr fp_subtract
-   lda FP_C
-   sta offset
-   lda FP_C+1
-   sta offset+1
+   FP_STC offset
    ldx model_x0
    lda model_y0
    sta line_upper,x
@@ -185,24 +177,25 @@ model_tick:
    sta model_y0
    pla
    sta model_y1
-   bra @draw
 @set_vert_line:
    lda model_y0
    sta line_upper,x
    lda model_y1
    sta line_lower,x
 @draw:
-   ldx model_x0
+   ldx #0
 @draw_x_loop:
-   cpx model_x1
-   beq @switch
-   inx
    ldy line_upper,x
 @draw_y_loop:
-   tya
-   cmp line_lower,x
-   bmi @plot
+   sty scratch
+   lda line_lower,x
+   sec
+   sbc scratch
+   cmp #$FF
+   bne @plot
+   inx
    bne @draw_x_loop
+   bra @switch
 @plot:
    iny
    phx
