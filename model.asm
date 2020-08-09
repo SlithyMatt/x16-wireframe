@@ -3,6 +3,8 @@ MODEL_INC = 1
 
 .include "fixedpt.asm"
 
+USE_X16_GRAPH = 0
+
 BITMAP_SIZE = 320 * 240 / 2
 
 X0_INIT = 0
@@ -44,6 +46,15 @@ init_model:
    sta model_x1
    lda #Y1_INIT
    sta model_y1
+.if USE_X16_GRAPH
+   stz r0L
+   stz r0H
+   jsr GRAPH_init
+   lda #1 ; white stroke
+   ldx #0 ; black fill
+   ldy #0 ; black background
+   jsr GRAPH_set_colors
+.endif
    rts
 
 clear_screen:
@@ -106,6 +117,33 @@ model_tick:
    adc delta_y
    sta model_y1
 @set_buffer:
+.if USE_X16_GRAPH
+   jsr GRAPH_clear
+   lda model_x0
+   clc
+   adc #32
+   sta r0L
+   lda model_x0+1
+   adc #0
+   sta r0H
+   lda model_y0
+   sta r1L
+   lda model_y0+1
+   sta r1H
+   lda model_x1
+   clc
+   adc #32
+   sta r2L
+   lda model_x1+1
+   adc #0
+   sta r2H
+   lda model_y1
+   sta r3L
+   lda model_y1+1
+   sta r3H
+   jsr GRAPH_draw_line
+   jmp @return
+.endif
    lda use_buffer
    eor #$01
    sta use_buffer

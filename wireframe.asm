@@ -50,6 +50,9 @@ start:
    ; Enable interrupts
    jsr init_irq
 
+   ; Initialize game
+   jsr init_game
+
 @main_loop:
    wai
    jsr check_vsync
