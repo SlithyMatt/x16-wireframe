@@ -124,6 +124,7 @@ model_tick:
    adc #32
    sta r0L
    lda model_x0+1
+   lda #0
    adc #0
    sta r0H
    lda model_y0
@@ -135,6 +136,7 @@ model_tick:
    adc #32
    sta r2L
    lda model_x1+1
+   lda #0
    adc #0
    sta r2H
    lda model_y1
